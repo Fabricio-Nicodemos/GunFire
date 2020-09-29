@@ -1,0 +1,27 @@
+package mundo;
+
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+
+import pricipal.Games;
+
+public class Tile {
+
+	public static BufferedImage tile_chao = Games.spritesheet.getSprite(0, 17, 16, 16);
+	public static BufferedImage tile_parede = Games.spritesheet.getSprite(17, 17, 16, 16);
+	
+	private BufferedImage sprite;
+	private int x,y;    
+	
+	
+	public void render (Graphics g) {
+		g.drawImage(sprite, x, y, null);
+	}
+	
+	public Tile(int x, int y, BufferedImage sprite) {
+		this.x = x;
+		this.y = y; 
+		this.sprite = sprite;
+	}
+	
+}
