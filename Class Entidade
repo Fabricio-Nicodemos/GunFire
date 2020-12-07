@@ -1,16 +1,31 @@
 package entidades;
 
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
+import mundo.Camera;
+import pricipal.Games;
+
 public class Entidade {
+	
+	public static BufferedImage CAIXA_VIDA = Games.spritesheet.getSprite(2*(17), 17, 16, 16);
+	public static BufferedImage ARMA = Games.spritesheet.getSprite(3*(16), 17, 15, 15);
+	public static BufferedImage MUNICAO = Games.spritesheet.getSprite(4*(16), 16, 16, 16);
+	public static BufferedImage INIMIGO = Games.spritesheet.getSprite(4*(16), 32, 17, 17);
+	public static BufferedImage GUN_LEFT = Games.spritesheet.getSprite(6*(16), 16, 15, 15);
+	public static BufferedImage GUN_RIGHT = Games.spritesheet.getSprite(5*(16), 16, 15, 15);
 
 	protected double x;
 	protected double y;
 	protected int width;
 	protected int height;
 	
+	public boolean debug = false;
+	
 	private BufferedImage sprite;
+
+	private int maskx, masky, mwidth, mheight;
 	
 	public Entidade (int x, int y, int width, int height, BufferedImage sprite) {
 		this.x = x;
@@ -18,6 +33,18 @@ public class Entidade {
 		this.width = width;
 		this.height = height;
 		this.sprite = sprite;
+		
+		this.maskx = 0;
+		this.masky = 0;
+		this.mwidth = width;
+		this.mheight = height;
+	}
+	
+	public void setMask(int maskx, int masky, int mwidth, int mheight) {
+		this.maskx = maskx;
+		this.masky = masky;
+		this.mwidth = width;
+		this.mheight = height;
 	}
 	
 	public void setX (int newX) {
@@ -25,7 +52,7 @@ public class Entidade {
 	}
 	
 	public void setY (int newY) {
-		this.x = newY;
+		this.y = newY;
 	}
 	
 	
@@ -46,12 +73,21 @@ public class Entidade {
 	}
 	
 	public void render (Graphics g) {
-		g.drawImage(sprite, this.getX(), this.getY(), null);
+		g.drawImage(sprite, this.getX() - Camera.x, this.getY() - Camera.y, null);
+		//g.setColor(Color.red);
+		//g.fillRect(this.getX() + maskx - Camera.x, this.getY() + masky - Camera.y, mwidth, mheight);
 	}
 	
 	
 	public void tick() {
 		
+	}
+	
+	public static boolean isColidding (Entidade e1, Entidade e2) {
+		Rectangle e1Mask = new Rectangle(e1.getX() + e1.maskx, e1.getY()+e1.masky, e1.mwidth, e1.mheight);
+		Rectangle e2Mask = new Rectangle(e2.getX() + e2.maskx, e2.getY()+e2.masky, e2.mwidth, e2.mheight);
+		
+		return e1Mask.intersects(e2Mask);
 	}
 	
 }
