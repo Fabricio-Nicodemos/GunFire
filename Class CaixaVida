@@ -1,0 +1,12 @@
+package entidades;
+
+import java.awt.image.BufferedImage;
+
+public class CaixaVida extends Entidade{
+
+	public CaixaVida(int x, int y, int width, int height, BufferedImage sprite) {
+		super(x, y, width, height, sprite);
+	}
+	
+
+}
