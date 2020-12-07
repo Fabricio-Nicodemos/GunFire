@@ -1,0 +1,132 @@
+package entidades;
+
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+
+import mundo.Camera;
+import mundo.Mundo;
+import pricipal.Games;
+
+public class Inimigo extends Entidade{
+
+	private double speed = 0.7;
+	
+	private int maskx = 8, masky = 8, maskw = 10, maskh = 10;
+	
+	private int frames = 0, maxFrames=20, index=0, maxIndex=1;
+	
+	private BufferedImage[] sprites;
+	
+	private int life = 10;
+	
+	
+	public Inimigo(int x, int y, int width, int height, BufferedImage sprite) {
+		super(x, y, width, height, null);
+		sprites = new BufferedImage[2];
+		sprites[0] = Games.spritesheet.getSprite(64, 32, 16, 16);
+		sprites[1] = Games.spritesheet.getSprite(64+16, 32, 16, 16);
+	}
+	
+	public void tick() {
+		/*
+		maskx = 8;
+		masky = 8;
+		maskw = 5;
+		maskh = 5;
+		*/
+			if(this.isColiddingComPlayer() == false) {
+			if ((int)x < Games.player.getX() && Mundo.isFree((int)(x+speed), this.getY()) && !isColidding((int)(x+speed), this.getY())) {
+				x+=speed;
+			}
+			else if ((int)x > Games.player.getX() && Mundo.isFree((int)(x-speed), this.getY()) && !isColidding((int)(x-speed), this.getY())) {
+				x-=speed;
+			}
+			
+			if ((int)y < Games.player.getY() && Mundo.isFree(this.getX(), (int)(y+speed)) && !isColidding(this.getX(), (int)(y+speed))) {
+				y+=speed;
+			}
+			else if ((int)y > Games.player.getY() && Mundo.isFree(this.getX(),(int)(y-speed)) && !isColidding(this.getX(),(int)(y-speed))) {
+				y-=speed;
+			}
+			}else {
+				//Estamos colidindo
+				if(Games.rand.nextInt(100) < 10) {
+				Games.player.vida-=Games.rand.nextInt(3);
+				Games.player.dano = true;
+				if(Games.player.vida <= 0) {
+					//Game over
+					//System.exit(1);
+				}
+				System.out.println("Vida: "+ Games.player.vida);
+				}
+			}
+			
+				frames ++;
+				if(frames == maxFrames) {
+					frames=0;
+					index++;
+					if(index > maxIndex) 
+						index = 0;
+			}
+				
+				collidingBala();
+				
+				if(life <= 0) {
+					destroySelf();
+					return;
+				}
+					
+		}
+	
+	public void destroySelf() {
+		Games.entidade.remove(this);
+	}
+	
+	public void collidingBala() {
+		for (int i = 0; i < Games.bala.size(); i++) {
+			Entidade e = Games.bala.get(i);
+			if(e instanceof Bala) {
+				
+				if (Entidade.isColidding(this,e)) {
+					life--;
+					Games.bala.remove(i);
+					System.out.println("Colisao");
+					return;
+				}
+			}
+		}
+	}
+	
+	public boolean isColiddingComPlayer() {
+		Rectangle inimigoCurrent = new Rectangle(this.getX() + maskx, this.getY() + masky, maskw, maskh);
+		Rectangle player = new Rectangle ( Games.player.getX(), Games.player.getY(), 16, 16);
+		
+		return inimigoCurrent.intersects(player);
+	}
+	
+	public boolean isColidding(int xnext, int ynext) {
+		Rectangle inimigoCurrent = new Rectangle(xnext + maskx,ynext + masky, maskw, maskh);
+		for(int i=0; i < Games.inimigos.size(); i++) {
+			Inimigo e = Games.inimigos.get(i);
+			if(e == this) {
+				continue;
+			}
+			Rectangle targetInimigo = new Rectangle(e.getX() + maskx,e.getY() + masky, maskw, maskh);
+			if(inimigoCurrent.intersects(targetInimigo)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public void render (Graphics g) {
+		g.drawImage(sprites[index], this.getX() - Camera.x, this.getY() - Camera.y, null);
+		//g.setColor(Color.BLUE);
+		//g.fillRect(this.getX() + maskx - Camera.x, this.getY() + masky - Camera.y, maskw, maskh);
+	}
+	
+	
+
+}
