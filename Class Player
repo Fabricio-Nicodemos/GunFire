@@ -2,7 +2,11 @@ package entidades;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
+import graficos.Spritesheet;
+import mundo.Camera;
+import mundo.Mundo;
 import pricipal.Games;
 
 public class Player extends Entidade{
@@ -10,45 +14,58 @@ public class Player extends Entidade{
 	public boolean right, up, left, down;
 	public int right_dir=0, left_dir=1;
 	public int dir = right_dir;
-	public double speed = 1.5;
+	public double speed = 1.8;
 	
 	private int frames = 0, maxFrames=5, index=0, maxIndex=3;
 	private boolean moved = false;
 	private BufferedImage[] rightPlayer;
 	private BufferedImage[] leftPlayer;
 	
+	private BufferedImage playerDano;
+	
+	private boolean gun = false;
+	public int municao = 0;
+	
+	public boolean dano = false;
+	private int danoFrames = 0;
+	public double vida = 100, maxlife = 100;
+	
+	public boolean atirar = false, mouseAtirar = false;
+	public int mx, my;
+	
 	public Player(int x, int y, int width, int height, BufferedImage sprite) {
 		super(x, y, width, height, sprite);
 		
 		rightPlayer = new BufferedImage[4];
 		leftPlayer = new BufferedImage[4];
+		playerDano = Games.spritesheet.getSprite(0, 50, 16, 16);
 		
 		for(int i=0; i<4; i++) {
 		leftPlayer[i] = Games.spritesheet.getSprite(0 +(i*16), 0, 17, 17);
 		}
 		
 		for(int i=0; i<4; i++) {
-			rightPlayer[i] = Games.spritesheet.getSprite(0 +(i*16), 32, 16, 17);
+			rightPlayer[i] = Games.spritesheet.getSprite(0 +(i*16), 33, 17, 17);
 			}
 		
 		}
 
 	public void tick() {
 		moved = false;
-		if(right) {
+		if(right && Mundo.isFree((int)(x+speed), this.getY())) {
 			moved = true;
 			dir = right_dir;
 			x+=speed;
-		}else if (left) {
+		}else if (left && Mundo.isFree((int)(x-speed), this.getY())) {
 			moved = true;
 			dir = left_dir;
 			x-=speed;
 		}
 		
-		if(up) {
+		if(up && Mundo.isFree(this.getX(),(int)(y-speed))) {
 			moved = true;
 			y-=speed;
-		}else if (down){
+		}else if (down&& Mundo.isFree(this.getX(),(int)(y+speed))){
 			moved = true;
 			y+=speed;
 		}
@@ -59,20 +76,148 @@ public class Player extends Entidade{
 			if(frames == maxFrames) {
 				frames=0;
 				index++;
-				if(index > maxIndex) {
+				if(index > maxIndex) 
 					index = 0;
-				}
+			}
+		}
+		this.verificarColisaoCaixaVida();
+		this.verificarColisaoMunicao();
+		this.verificarColisaoGun();
+		
+		if(dano) {
+			this.danoFrames++;
+			if(this.danoFrames == 8) {
+				this.danoFrames = 0;
+				dano = false;
 			}
 		}
 		
+		if(atirar) {
+			atirar = false;
+			if(gun && municao > 0) {
+			municao--;
+			//Crair Bala e atirar
+			int dx=0;
+			int px = 0;
+			int py = 8;
+			atirar = false;
+			if(dir == right_dir) {
+				px = 23;
+				dx = 1;
+			}else {
+				px = -8;
+				dx = -1;
+			}
+			
+			Bala atirando = new Bala(this.getX() + px, this.getY() + py, 2, 2, null, dx, 0);
+			Games.bala.add(atirando);
+			}
+		}
+		
+		if(mouseAtirar) {
+			
+			mouseAtirar = false;
+			if(gun && municao > 0) {
+			municao--;
+			//Crair Bala e atirar
+			
+			int px = 0, py = 8;
+			double angle = 0;
+			if(dir == right_dir) {
+				px = 25;
+				angle = Math.atan2(my - (this.getY() + py - Camera.y),mx - (this.getX() + px - Camera.x));
+			}else {
+				px = -8;
+				angle = Math.atan2(my - (this.getY() + py - Camera.y),mx - (this.getX() + px - Camera.x));
+			}
+
+			double dx = Math.cos(angle);
+			double dy = Math.sin(angle);
+			
+			Bala atirando = new Bala(this.getX() + px, this.getY() + py, 2, 2, null, dx, dy);
+			Games.bala.add(atirando);
+			}
+			
+		}
+		
+		if(vida<=0) {
+			/*
+			Games.entidade.clear();
+			Games.inimigos.clear();
+			Games.entidade = new ArrayList<Entidade>();
+			Games.inimigos = new ArrayList<Inimigo>();
+			Games.spritesheet = new Spritesheet("/spriteheet.game1.png");
+			Games.player = new Player  (0,0,15,15,Games.spritesheet.getSprite(0, 0, 15, 15));
+			Games.entidade.add(Games.player);
+			Games.mundo = new Mundo ("/map.png");
+			return;*/
+		}
+		
+		//Contrle de Camera
+		Camera.x = Camera.clamp(this.getX() - (Games.WIDTH/2), 0, Mundo.WIDTH*16 - Games.WIDTH) ;
+		Camera.y = Camera.clamp(this.getY() - (Games.HEIGHT/2), 0, Mundo.HEIGHT*16 - Games.HEIGHT) ;
 	}
 
-	public void render( Graphics g) {
-		if(dir == right_dir) {
-		g.drawImage(rightPlayer[index], this.getX(), this.getY(), null);
-		}else if(dir == left_dir) {
-			g.drawImage(leftPlayer[index], this.getX(), this.getY(), null);
+	
+	public void verificarColisaoMunicao() {
+		for (int i = 0; i < Games.entidade.size(); i++) {
+			Entidade atual = Games.entidade.get(i);
+			if (atual instanceof Municao) {
+				if ( Entidade.isColidding(this, atual)) {
+					municao+=20;
+					//System.out.println("Municao Atual: " + municao);
+					Games.entidade.remove(atual);
+				}
 			}
+		}
+	}
+	
+	public void verificarColisaoCaixaVida () {
+		for (int i = 0; i < Games.entidade.size(); i++) {
+			Entidade atual = Games.entidade.get(i);
+			if (atual instanceof CaixaVida) {
+				if ( Entidade.isColidding(this, atual)) {
+					vida+=10;
+					if(vida > 100) {
+						vida = 100;
+					}
+					Games.entidade.remove(atual);
+				}
+			}
+		}
+	}
+	
+	public void verificarColisaoGun () {
+		for (int i = 0; i < Games.entidade.size(); i++) {
+			Entidade atual = Games.entidade.get(i);
+			if (atual instanceof Arma) {
+				if ( Entidade.isColidding(this, atual)) {
+					gun = true;
+					//System.out.println("Pegou a arma");
+					Games.entidade.remove(atual);
+				}
+			}
+		}
+	}
+	
+	public void render( Graphics g) {
+		if(!dano) {
+		if(dir == right_dir) {
+		g.drawImage(rightPlayer[index], this.getX() - Camera.x, this.getY() - Camera.y, null);
+		if (gun) {
+			//desenhar arma para direira.
+			g.drawImage(Entidade.GUN_RIGHT, this.getX() + 11 - Camera.x, this.getY() + 4 - Camera.y, null);
+		}
+		}else if(dir == left_dir) {
+			g.drawImage(leftPlayer[index], this.getX() - Camera.x, this.getY() - Camera.y, null);
+			if(gun) {
+				//desenhar arma para esquerda.
+				g.drawImage(Entidade.GUN_LEFT, this.getX() - 11 - Camera.x, this.getY() + 4  - Camera.y, null);
+			}
+			}
+		}else {
+			g.drawImage(playerDano, this.getX() - Camera.x, this.getY() - Camera.y, null);
+		}
 		}
 	
 }
