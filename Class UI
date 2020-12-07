@@ -1,0 +1,22 @@
+package graficos;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+
+import entidades.Player;
+import pricipal.Games;
+
+public class UI {
+	
+	public void render (Graphics g) {
+		g.setColor(Color.red);
+		g.fillRect(4, 3, 50, 5);
+		g.setColor(Color.green);
+		g.fillRect(4, 3, (int) ((Games.player.vida/Games.player.maxlife)*50), 5);
+		g.setColor(Color.white);
+		g.setFont(new Font("Arial", Font.BOLD, 7));
+		g.drawString((int)Games.player.vida +"/"+ (int)Games.player.maxlife,18,8);
+	}
+	
+}
