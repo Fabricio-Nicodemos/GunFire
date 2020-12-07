@@ -3,40 +3,56 @@ package pricipal;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
+import entidades.Bala;
 import entidades.Entidade;
+import entidades.Inimigo;
 import entidades.Player;
 import graficos.Spritesheet;
+import graficos.UI;
+import mundo.Camera;
 import mundo.Mundo;
 
 
-public class Games extends Canvas implements Runnable, KeyListener{
+public class Games extends Canvas implements Runnable, KeyListener, MouseListener{
 
 	private static final long serialVersionUID = 1L;
 	public static JFrame frame;
 	private Thread thread;
 	private boolean isRunning = true;
-	private final int WIDTH = 300;
-	private final int HEIGHT = 200;
+	public static int WIDTH = 240;
+	public static  int HEIGHT = 160;
 	private final int SCALE = 3;
+	
+	public char sigla;
 	
 	private BufferedImage image;
 	
-	public List<Entidade> entidade;
+	public static List<Entidade> entidade;
+	public static List<Inimigo> inimigos;
 	public static Spritesheet spritesheet;
+	public static List<Bala> bala;
 	
 	public static Mundo mundo;
 	
-	private Player player;
+	public static Player player;
+	
+	public static Random rand;
+	
+	public UI ui;
 
 	public static void main(String[] args) {
 		Games game = new Games();
@@ -46,18 +62,21 @@ public class Games extends Canvas implements Runnable, KeyListener{
 	
 	/*Construtor*/
 	public Games() {
+		rand = new Random();
 		addKeyListener(this);
+		addMouseListener(this);
 		setPreferredSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
 		initFrame();
-		
 		//Inicializando Objetos
-		
+		ui = new UI();
 		image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 		entidade = new ArrayList<Entidade>();
+		inimigos = new ArrayList<Inimigo>();
+		bala = new ArrayList<Bala>();
 		spritesheet = new Spritesheet("/spriteheet.game1.png");
-		mundo = new Mundo ("/map.png");
-		player = new Player  (0,0,16,16,spritesheet.getSprite(0, 0, 17, 17));
+		player = new Player  (0,0,15,15,spritesheet.getSprite(0, 0, 15, 15));
 		entidade.add(player);
+		mundo = new Mundo ("/map.png");
 	}
 	
 	//Criando janela 
@@ -96,6 +115,11 @@ public class Games extends Canvas implements Runnable, KeyListener{
 			Entidade e = entidade.get(i);
 			e.tick();
 		}
+		
+		for(int i = 0; i < bala.size(); i++) {
+			bala.get(i).tick();
+		}
+		
 	}
 	
 	//Renderizando
@@ -132,11 +156,18 @@ public class Games extends Canvas implements Runnable, KeyListener{
 			Entidade e = entidade.get(i);
 			e.render(g);
 		}
+		for(int i = 0; i < bala.size(); i++) {
+			bala.get(i).render(g);
+		}
+		ui.render(g);
 		/***/
 		//Colocando a imagem na aplicação
 		g.dispose();
 		g = bs.getDrawGraphics();
 		g.drawImage (image, 0, 0, WIDTH*SCALE, HEIGHT*SCALE, null);
+		g.setFont(new Font("Arial", Font.BOLD, 20));
+		g.setColor(Color.white);
+		g.drawString("Munição: "+ player.municao, 580, 25);
 		bs.show();
 	}
 
@@ -148,6 +179,7 @@ public class Games extends Canvas implements Runnable, KeyListener{
 		double delta = 0;
 		int frames = 0;
 		double timer = System.currentTimeMillis();
+		requestFocus();
 		while(isRunning) {
 			
 			long now = System.nanoTime();
@@ -189,7 +221,11 @@ stop();
 			player.up = true;
 		}else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
 			player.down = true;
-		}		
+		}	
+		
+		if(e.getKeyCode() == KeyEvent.VK_X) {
+			player.atirar = true;
+		}
 	}
 	
 
@@ -208,6 +244,41 @@ stop();
 		}	
 		
 	}
+
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		player.mouseAtirar = true;
+		player.mx = (e.getX() /3);
+		player.my = (e.getY() /3);
+	}
+
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
-
